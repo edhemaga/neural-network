@@ -58,18 +58,28 @@ class Network {
 	feedforward(layer) {
 		for (let i = 0; i < layer.input?.length; i++) {
 			for (let j = 0; j < layer.output?.length; j++) {
-				layer.output[j] +=
+				const value =
 					Math.round(layer.weights[i][j] * layer.input[i] * 1000) /
 					1000;
+				layer.output[j] += this.ReLu(value);
 			}
 		}
 	}
 
-	sigmoid(x) {
-		return 1 / (1 + Math.exp(-x));
+	sigmoid(value) {
+		return 1 / (1 + Math.exp(-value));
+	}
+
+	ReLu(value) {
+		if (value < 0) return 0;
+		return value;
+	}
+
+	calculateCost(value, expectedValue) {
+		return (expectedValue - value) * (expectedValue - value);
 	}
 }
 
 var network = new Network([1, 2, 3], [5, 2]);
 
-console.log(network);
+console.log(network.layers);
