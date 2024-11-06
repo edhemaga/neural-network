@@ -1,20 +1,21 @@
 class Layer {
 	input;
 	output;
-
 	weights;
 	biases;
 
 	constructor(input, outputSize) {
 		this.input = input;
-		this.initializeOutputs(outputSize);
+		this.initializeOutputsAndBiases(outputSize);
 		this.initializeWeights();
 	}
 
-	initializeOutputs(outputSize) {
+	initializeOutputsAndBiases(outputSize) {
 		this.output = [];
+		this.biases = [];
 		for (let i = 0; i < outputSize; i++) {
 			this.output = [...this.output, 0];
+			this.biases = [0.1, ...this.biases];
 		}
 	}
 
@@ -41,7 +42,6 @@ class Network {
 	constructor(input, hiddenLayersOutputSize) {
 		this.layers = [new Layer(input, 5)];
 
-		//
 		hiddenLayersOutputSize.forEach((outputSize) => {
 			const length = this.layers?.length - 1;
 			this.layers = [
@@ -61,7 +61,11 @@ class Network {
 				const value =
 					Math.round(layer.weights[i][j] * layer.input[i] * 1000) /
 					1000;
-				layer.output[j] += this.ReLu(value);
+				layer.output[j] += value;
+				if (j === layer.output.length - 1)
+					layer.output[j] = this.ReLu(
+						layer.output[j] + layer.biases[j]
+					);
 			}
 		}
 	}
@@ -78,8 +82,16 @@ class Network {
 	calculateCost(value, expectedValue) {
 		return (expectedValue - value) * (expectedValue - value);
 	}
+
+	calculateMSE(outputs, expectedOutputs) {
+		return (
+			outputs.reduce((acc, curr, i) => {
+				acc += this.calculateCost(curr, expectedOutputs[i]);
+			}) / outputs.length
+		);
+	}
 }
 
-var network = new Network([1, 2, 3], [5, 2]);
+var network = new Network([1, 2], [5, 2]);
 
 console.log(network.layers);
