@@ -15,7 +15,7 @@ class Layer {
 		this.biases = [];
 		for (let i = 0; i < outputSize; i++) {
 			this.output = [...this.output, 0];
-			this.biases = [0.1, ...this.biases];
+			this.biases = [...this.biases, 0.1];
 		}
 	}
 
@@ -39,10 +39,12 @@ class Network {
 	// TODO add some input
 	layers;
 
-	constructor(input, hiddenLayersOutputSize) {
+	constructor(input, hiddenLayersOutputSize, targetOutputs) {
 		this.layers = [new Layer(input, 5)];
 
-		hiddenLayersOutputSize.forEach((outputSize) => {
+		const allLayers = [...hiddenLayersOutputSize, targetOutputs.length];
+
+		allLayers.forEach((outputSize) => {
 			const length = this.layers?.length - 1;
 			this.layers = [
 				...this.layers,
@@ -63,15 +65,22 @@ class Network {
 					1000;
 				layer.output[j] += value;
 				if (j === layer.output.length - 1)
-					layer.output[j] = this.ReLu(
+					layer.output[j] = this.sigmoid(
 						layer.output[j] + layer.biases[j]
 					);
 			}
 		}
 	}
 
+	backpropagate() {}
+
 	sigmoid(value) {
 		return 1 / (1 + Math.exp(-value));
+	}
+
+	sigmoidDerivative(value) {
+		const sigmoidValue = sigmoid(value);
+		return sigmoidValue * (1 - sigmoidValue);
 	}
 
 	ReLu(value) {
@@ -83,6 +92,22 @@ class Network {
 		return (expectedValue - value) * (expectedValue - value);
 	}
 
+	constHelper(value, expected) {
+		const valueToActivationDiff = this.sigmoidDerivative(value);
+		const expectedToValueDiff = 2 * (value - expected);
+		return valueToActivationDiff * expectedToValueDiff;
+	}
+
+	// Partial derivatives are to be used here
+	calculateCostByWeight(previousValue, value, expected) {
+		const previousToActivationDiff = previousValue;
+		return previousToActivationDiff * constHelper(value, expected);
+	}
+	calculateCostByBias(value, expected) {
+		// Since derivative of bias is 1
+		return constHelper(value, expected);
+	}
+
 	calculateMSE(outputs, expectedOutputs) {
 		return (
 			outputs.reduce((acc, curr, i) => {
@@ -91,7 +116,7 @@ class Network {
 		);
 	}
 }
-
-var network = new Network([1, 2], [5, 2]);
+// Parameters order: Input data, hidden layer configuration, expected values
+var network = new Network([1, 2], [3], [0.2, 0.5]);
 
 console.log(network.layers);
